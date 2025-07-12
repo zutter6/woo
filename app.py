@@ -1,7 +1,6 @@
 from src.main import app as fastapi_app
 import gradio as gr
 from fastapi import FastAPI
-from fastapi.middleware.wsgi import WSGIMiddleware
 
 # 定义 Gradio 聊天界面
 def create_gradio_app():
@@ -12,7 +11,6 @@ def create_gradio_app():
         send = gr.Button("发送")
         clear = gr.Button("清空对话")
         def respond(user_message, chat_history):
-            # 这里只做演示，实际可调用你的API
             return "", chat_history
         send.click(respond, [msg, chatbot], [msg, chatbot])
         clear.click(lambda: ([], ""), None, [chatbot, msg])
@@ -20,8 +18,11 @@ def create_gradio_app():
 
 gradio_app = create_gradio_app()
 
-# 创建 FastAPI 应用，并挂载 Gradio 到 /ui
+# 创建 FastAPI 应用
 app = FastAPI()
-app.mount("/ui", WSGIMiddleware(gradio_app.server_app))
-app.mount("/", fastapi_app)  
+# 挂载 Gradio 到 /ui
+import gradio
+app = gradio.mount_gradio_app(app, gradio_app, path="/ui")
+# 挂载你的 API 路由
+app.mount("/", fastapi_app)
 
